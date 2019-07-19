@@ -20,10 +20,13 @@ class NoteViewController: UIViewController, UITextViewDelegate {
     // the note text
     var noteText : String?
     
+    // the delegate property that will be set on parent
     var delegate: CanReceive?
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        noteTextView.returnKeyType = .done
         
         if noteText != nil {
             noteTextView.text = self.noteText
