@@ -16,20 +16,23 @@ class NoteListTableViewController: UITableViewController, CanReceive {
     
     // list of notes
     var noteList = [Note]()
+    
+    // store the indexPath of the item clicked so that the text sent back can be saved at the right index
+    var temporaryIndexPath: IndexPath?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         loadItems()
     }
-    
-    var temporaryIndexPath: IndexPath?
 
     // MARK: - Table view data source
 
+    // number of items in the table
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return noteList.count
     }
 
+    // how the cell looks like
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "noteItem", for: indexPath)
         cell.textLabel?.text = noteList[indexPath.row].name
@@ -38,6 +41,7 @@ class NoteListTableViewController: UITableViewController, CanReceive {
     
     // MARK: - Core Data operations
     
+    // save items in Core Data
     func saveItems() {
         do {
             try self.contex.save()
@@ -47,8 +51,10 @@ class NoteListTableViewController: UITableViewController, CanReceive {
         tableView.reloadData()
     }
  
+    // load items from Core Data
     func loadItems(with request: NSFetchRequest<Note> = Note.fetchRequest(), predicate: NSPredicate? = nil) {
         if predicate != nil {
+            // in case I have a predicate for the search functionality...
             request.predicate = predicate
         }
         
@@ -62,6 +68,7 @@ class NoteListTableViewController: UITableViewController, CanReceive {
     
     // MARK: - Add button
     
+    // triggers when add button is pressed
     @IBAction func onAdd(_ sender: UIBarButtonItem) {
         let alert = UIAlertController(title: "Add new YouNote item", message: "", preferredStyle: .alert)
         var textField = UITextField()
@@ -84,13 +91,16 @@ class NoteListTableViewController: UITableViewController, CanReceive {
     
     // MARK: - Tapping method
     
+    // triggers when tapping on an element of the list
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         // go to the next screen
         performSegue(withIdentifier: "goToNote", sender: self)
     }
     
+    // prepare to go to next screen
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let destinationVC = segue.destination as! NoteViewController
+        // set ourself as the delegate of the NoteViewController
         destinationVC.delegate = self
         
         if let indexPath = tableView.indexPathForSelectedRow {
@@ -100,6 +110,8 @@ class NoteListTableViewController: UITableViewController, CanReceive {
     }
     
     // MARK: - Protocol methods
+    
+    // triggers when done button is pressed in NoteViewController
     func dataReceived(data: String) {
         noteList[temporaryIndexPath!.row].note = data
         saveItems()
@@ -112,6 +124,7 @@ class NoteListTableViewController: UITableViewController, CanReceive {
 
 extension NoteListTableViewController : UISearchBarDelegate {
     
+    // triggers when the search button is pressed
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         let request: NSFetchRequest<Note> = Note.fetchRequest()
         let predicate: NSPredicate = NSPredicate(format: "name CONTAINS[cd] %@", searchBar.text!)
@@ -119,7 +132,9 @@ extension NoteListTableViewController : UISearchBarDelegate {
         loadItems(with: request, predicate: predicate)
     }
     
+    // triggers every time the text changes in the search bar
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        // if there are no characters (= the user pressed the x button)
         if searchText.isEmpty {
             loadItems()
             DispatchQueue.main.async {

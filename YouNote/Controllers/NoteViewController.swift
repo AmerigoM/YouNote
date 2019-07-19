@@ -26,6 +26,7 @@ class NoteViewController: UIViewController, UITextViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // set the return type in the keyboard for the noteTextView
         noteTextView.returnKeyType = .done
         
         if noteText != nil {
@@ -34,7 +35,7 @@ class NoteViewController: UIViewController, UITextViewDelegate {
             noteTextView.text = ""
         }
         
-        // list of delegates
+        // set ourself as the delefate of the UITextView
         noteTextView.delegate = self
     }
     
