@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import SwipeCellKit
 
 class NoteListTableViewController: UITableViewController, CanReceive {
     
@@ -23,19 +24,22 @@ class NoteListTableViewController: UITableViewController, CanReceive {
     override func viewDidLoad() {
         super.viewDidLoad()
         loadItems()
+        tableView.rowHeight = 80
     }
 
     // MARK: - Table view data source
 
     // number of items in the table
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        print("Count, \(noteList.count)")
         return noteList.count
     }
 
     // how the cell looks like
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "noteItem", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "noteItem", for: indexPath) as! SwipeTableViewCell
         cell.textLabel?.text = noteList[indexPath.row].name
+        cell.delegate = self
         return cell
     }
     
@@ -64,6 +68,20 @@ class NoteListTableViewController: UITableViewController, CanReceive {
             print("Error in loading items, \(error)")
         }
         tableView.reloadData()
+    }
+    
+    // remove an item of indexRow
+    func deleteItem(withIndexPath indexPath: IndexPath) {
+        // remove the item from the database
+        self.contex.delete(noteList[indexPath.row])
+        // remove the item from the noteList
+        noteList.remove(at: indexPath.row)
+        // we can't call saveItems() because reloadData() is auto-implemented in SwipeTableView
+        do {
+            try self.contex.save()
+        } catch {
+            print("Error in saving items, \(error)")
+        }
     }
     
     // MARK: - Add button
@@ -143,4 +161,29 @@ extension NoteListTableViewController : UISearchBarDelegate {
         }
     }
     
+}
+
+// MARK: - Swipe cell delegate methods
+
+extension NoteListTableViewController: SwipeTableViewCellDelegate {
+    
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
+        guard orientation == .right else { return nil }
+        
+        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
+            // handle action by updating model with deletion
+            self.deleteItem(withIndexPath: indexPath)
+        }
+        
+        // customize the action appearance
+        deleteAction.image = UIImage(named: "deleteIcon")
+        
+        return [deleteAction]
+    }
+ 
+    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
+        var options = SwipeOptions()
+        options.expansionStyle = .destructive
+        return options
+    }
 }
